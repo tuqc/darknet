@@ -59,10 +59,11 @@ layer make_batchnorm_layer(int batch, int w, int h, int c)
     l.x_gpu = cuda_make_array(l.output, l.batch*l.outputs);
     l.x_norm_gpu = cuda_make_array(l.output, l.batch*l.outputs);
     #ifdef CUDNN
-    cudnnCreateTensorDescriptor(&l.normTensorDesc);
-    cudnnCreateTensorDescriptor(&l.dstTensorDesc);
-    cudnnSetTensor4dDescriptor(l.dstTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, l.batch, l.out_c, l.out_h, l.out_w); 
-    cudnnSetTensor4dDescriptor(l.normTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, 1, l.out_c, 1, 1); 
+    l.data_cudnn = calloc(1, sizeof(layercudnn));
+    cudnnCreateTensorDescriptor(&((l.data_cudnn)->normTensorDesc));
+    cudnnCreateTensorDescriptor(&((l.data_cudnn)->dstTensorDesc));
+    cudnnSetTensor4dDescriptor((l.data_cudnn)->dstTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, l.batch, l.out_c, l.out_h, l.out_w);
+    cudnnSetTensor4dDescriptor((l.data_cudnn)->normTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, 1, l.out_c, 1, 1);
 
     #endif
 #endif
@@ -145,7 +146,7 @@ void forward_batchnorm_layer(layer l, network net)
         scal_cpu(l.out_c, .99, l.rolling_variance, 1);
         axpy_cpu(l.out_c, .01, l.variance, 1, l.rolling_variance, 1);
 
-        normalize_cpu(l.output, l.mean, l.variance, l.batch, l.out_c, l.out_h*l.out_w);   
+        normalize_cpu(l.output, l.mean, l.variance, l.batch, l.out_c, l.out_h*l.out_w);
         copy_cpu(l.outputs*l.batch, l.output, 1, l.x_norm, 1);
     } else {
         normalize_cpu(l.output, l.rolling_mean, l.rolling_variance, l.batch, l.out_c, l.out_h*l.out_w);
@@ -198,11 +199,11 @@ void forward_batchnorm_layer_gpu(layer l, network net)
                 CUDNN_BATCHNORM_SPATIAL,
                 &one,
                 &zero,
-                l.dstTensorDesc,
+                (l.data_cudnn)->dstTensorDesc,
                 l.x_gpu,
-                l.dstTensorDesc,
+                (l.data_cudnn)->dstTensorDesc,
                 l.output_gpu,
-                l.normTensorDesc,
+                (l.data_cudnn)->normTensorDesc,
                 l.scales_gpu,
                 l.biases_gpu,
                 .01,
@@ -250,13 +251,13 @@ void backward_batchnorm_layer_gpu(layer l, network net)
             &zero,
             &one,
             &one,
-            l.dstTensorDesc,
+            (l.data_cudnn)->dstTensorDesc,
             l.x_gpu,
-            l.dstTensorDesc,
+            (l.data_cudnn)->dstTensorDesc,
             l.delta_gpu,
-            l.dstTensorDesc,
+            (l.data_cudnn)->dstTensorDesc,
             l.x_norm_gpu,
-            l.normTensorDesc,
+            (l.data_cudnn)->normTensorDesc,
             l.scales_gpu,
             l.scale_updates_gpu,
             l.bias_updates_gpu,

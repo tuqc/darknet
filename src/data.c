@@ -9,7 +9,7 @@
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
-list *get_paths(char *filename)
+list *get_paths(const char *filename)
 {
     char *path;
     FILE *file = fopen(filename, "r");
@@ -404,10 +404,19 @@ void fill_truth_iseg(char *path, int num_boxes, float *truth, int classes, int w
 void fill_truth_detection(char *path, int num_boxes, float *truth, int classes, int flip, float dx, float dy, float sx, float sy)
 {
     char labelpath[4096];
-    find_replace(path, "images", "labels", labelpath);
-    find_replace(labelpath, "JPEGImages", "labels", labelpath);
-
-    find_replace(labelpath, "raw", "labels", labelpath);
+    //find_replace(path, "images", "labels", labelpath);
+    find_replace(path, "JPEGImages", "labels", labelpath);
+    char * p = strstr(labelpath, "labels");
+    if (p) {
+        p += 7;
+        while (*p != '/') p++;
+        p += 1;
+        while (*p != '\0') {
+            if (*p == '/') *p = '_';
+            p++;
+        }
+    }
+    //find_replace(labelpath, "raw", "labels", labelpath);
     find_replace(labelpath, ".jpg", ".txt", labelpath);
     find_replace(labelpath, ".png", ".txt", labelpath);
     find_replace(labelpath, ".JPG", ".txt", labelpath);
@@ -598,7 +607,7 @@ matrix load_tags_paths(char **paths, int n, int k)
     return y;
 }
 
-char **get_labels(char *filename)
+char **get_labels(const char *filename)
 {
     list *plist = get_paths(filename);
     char **labels = (char **)list_to_array(plist);

@@ -94,4 +94,8 @@ void free_layer(layer l)
     if(l.squared_gpu)             cuda_free(l.squared_gpu);
     if(l.norms_gpu)               cuda_free(l.norms_gpu);
 #endif
+
+#ifdef CUDNN
+    if(l.data_cudnn)              free(l.data_cudnn);
+#endif
 }

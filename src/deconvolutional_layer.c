@@ -129,10 +129,11 @@ layer make_deconvolutional_layer(int batch, int h, int w, int c, int n, int size
         }
     }
     #ifdef CUDNN
-        cudnnCreateTensorDescriptor(&l.dstTensorDesc);
-        cudnnCreateTensorDescriptor(&l.normTensorDesc);
-        cudnnSetTensor4dDescriptor(l.dstTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, l.batch, l.out_c, l.out_h, l.out_w); 
-        cudnnSetTensor4dDescriptor(l.normTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, 1, l.out_c, 1, 1); 
+        l.data_cudnn = calloc(1, sizeof(layercudnn));
+        cudnnCreateTensorDescriptor(&((l.data_cudnn)->dstTensorDesc));
+        cudnnCreateTensorDescriptor(&((l.data_cudnn)->normTensorDesc));
+        cudnnSetTensor4dDescriptor((l.data_cudnn)->dstTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, l.batch, l.out_c, l.out_h, l.out_w);
+        cudnnSetTensor4dDescriptor((l.data_cudnn)->normTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, 1, l.out_c, 1, 1);
     #endif
 #endif
 
@@ -191,8 +192,8 @@ void resize_deconvolutional_layer(layer *l, int h, int w)
         l->x_norm_gpu = cuda_make_array(l->output, l->batch*l->outputs);
     }
     #ifdef CUDNN
-        cudnnSetTensor4dDescriptor(l->dstTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, l->batch, l->out_c, l->out_h, l->out_w); 
-        cudnnSetTensor4dDescriptor(l->normTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, 1, l->out_c, 1, 1); 
+        cudnnSetTensor4dDescriptor((l->data_cudnn)->dstTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, l->batch, l->out_c, l->out_h, l->out_w);
+        cudnnSetTensor4dDescriptor((l->data_cudnn)->normTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, 1, l->out_c, 1, 1);
     #endif
 #endif
     l->workspace_size = get_workspace_size(*l);
@@ -248,7 +249,7 @@ void backward_deconvolutional_layer(layer l, network net)
         float *b = net.workspace;
         float *c = l.weight_updates;
 
-        im2col_cpu(l.delta + i*l.outputs, l.out_c, l.out_h, l.out_w, 
+        im2col_cpu(l.delta + i*l.outputs, l.out_c, l.out_h, l.out_w,
                 l.size, l.stride, l.pad, b);
         gemm_cpu(0,1,m,n,k,1,a,k,b,k,1,c,n);
 

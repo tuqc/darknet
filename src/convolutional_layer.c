@@ -89,27 +89,27 @@ static size_t get_workspace_size(layer l){
         size_t most = 0;
         size_t s = 0;
         cudnnGetConvolutionForwardWorkspaceSize(cudnn_handle(),
-                l.srcTensorDesc,
-                l.weightDesc,
-                l.convDesc,
-                l.dstTensorDesc,
-                l.fw_algo,
+                (l.data_cudnn)->srcTensorDesc,
+                (l.data_cudnn)->weightDesc,
+                (l.data_cudnn)->convDesc,
+                (l.data_cudnn)->dstTensorDesc,
+                (l.data_cudnn)->fw_algo,
                 &s);
         if (s > most) most = s;
         cudnnGetConvolutionBackwardFilterWorkspaceSize(cudnn_handle(),
-                l.srcTensorDesc,
-                l.ddstTensorDesc,
-                l.convDesc,
-                l.dweightDesc,
-                l.bf_algo,
+                (l.data_cudnn)->srcTensorDesc,
+                (l.data_cudnn)->ddstTensorDesc,
+                (l.data_cudnn)->convDesc,
+                (l.data_cudnn)->dweightDesc,
+                (l.data_cudnn)->bf_algo,
                 &s);
         if (s > most) most = s;
         cudnnGetConvolutionBackwardDataWorkspaceSize(cudnn_handle(),
-                l.weightDesc,
-                l.ddstTensorDesc,
-                l.convDesc,
-                l.dsrcTensorDesc,
-                l.bd_algo,
+                (l.data_cudnn)->weightDesc,
+                (l.data_cudnn)->ddstTensorDesc,
+                (l.data_cudnn)->convDesc,
+                (l.data_cudnn)->dsrcTensorDesc,
+                (l.data_cudnn)->bd_algo,
                 &s);
         if (s > most) most = s;
         return most;
@@ -122,43 +122,43 @@ static size_t get_workspace_size(layer l){
 #ifdef CUDNN
 void cudnn_convolutional_setup(layer *l)
 {
-    cudnnSetTensor4dDescriptor(l->dsrcTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, l->batch, l->c, l->h, l->w); 
-    cudnnSetTensor4dDescriptor(l->ddstTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, l->batch, l->out_c, l->out_h, l->out_w); 
-    cudnnSetFilter4dDescriptor(l->dweightDesc, CUDNN_DATA_FLOAT, CUDNN_TENSOR_NCHW, l->n, l->c, l->size, l->size); 
+    cudnnSetTensor4dDescriptor((l->data_cudnn)->dsrcTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, l->batch, l->c, l->h, l->w);
+    cudnnSetTensor4dDescriptor((l->data_cudnn)->ddstTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, l->batch, l->out_c, l->out_h, l->out_w);
+    cudnnSetFilter4dDescriptor((l->data_cudnn)->dweightDesc, CUDNN_DATA_FLOAT, CUDNN_TENSOR_NCHW, l->n, l->c, l->size, l->size);
 
-    cudnnSetTensor4dDescriptor(l->srcTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, l->batch, l->c, l->h, l->w); 
-    cudnnSetTensor4dDescriptor(l->dstTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, l->batch, l->out_c, l->out_h, l->out_w); 
-    cudnnSetTensor4dDescriptor(l->normTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, 1, l->out_c, 1, 1); 
-    cudnnSetFilter4dDescriptor(l->weightDesc, CUDNN_DATA_FLOAT, CUDNN_TENSOR_NCHW, l->n, l->c, l->size, l->size); 
+    cudnnSetTensor4dDescriptor((l->data_cudnn)->srcTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, l->batch, l->c, l->h, l->w);
+    cudnnSetTensor4dDescriptor((l->data_cudnn)->dstTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, l->batch, l->out_c, l->out_h, l->out_w);
+    cudnnSetTensor4dDescriptor((l->data_cudnn)->normTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, 1, l->out_c, 1, 1);
+    cudnnSetFilter4dDescriptor((l->data_cudnn)->weightDesc, CUDNN_DATA_FLOAT, CUDNN_TENSOR_NCHW, l->n, l->c, l->size, l->size);
     #if CUDNN_MAJOR >= 6
-    cudnnSetConvolution2dDescriptor(l->convDesc, l->pad, l->pad, l->stride, l->stride, 1, 1, CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT);
+    cudnnSetConvolution2dDescriptor((l->data_cudnn)->convDesc, l->pad, l->pad, l->stride, l->stride, 1, 1, CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT);
     #else
-    cudnnSetConvolution2dDescriptor(l->convDesc, l->pad, l->pad, l->stride, l->stride, 1, 1, CUDNN_CROSS_CORRELATION);
+    cudnnSetConvolution2dDescriptor((l->data_cudnn)->convDesc, l->pad, l->pad, l->stride, l->stride, 1, 1, CUDNN_CROSS_CORRELATION);
     #endif
     cudnnGetConvolutionForwardAlgorithm(cudnn_handle(),
-            l->srcTensorDesc,
-            l->weightDesc,
-            l->convDesc,
-            l->dstTensorDesc,
+            (l->data_cudnn)->srcTensorDesc,
+            (l->data_cudnn)->weightDesc,
+            (l->data_cudnn)->convDesc,
+            (l->data_cudnn)->dstTensorDesc,
             CUDNN_CONVOLUTION_FWD_PREFER_FASTEST,
             0,
-            &l->fw_algo);
+            &((l->data_cudnn)->fw_algo));
     cudnnGetConvolutionBackwardDataAlgorithm(cudnn_handle(),
-            l->weightDesc,
-            l->ddstTensorDesc,
-            l->convDesc,
-            l->dsrcTensorDesc,
+            (l->data_cudnn)->weightDesc,
+            (l->data_cudnn)->ddstTensorDesc,
+            (l->data_cudnn)->convDesc,
+            (l->data_cudnn)->dsrcTensorDesc,
             CUDNN_CONVOLUTION_BWD_DATA_PREFER_FASTEST,
             0,
-            &l->bd_algo);
+            &((l->data_cudnn)->bd_algo));
     cudnnGetConvolutionBackwardFilterAlgorithm(cudnn_handle(),
-            l->srcTensorDesc,
-            l->ddstTensorDesc,
-            l->convDesc,
-            l->dweightDesc,
+            (l->data_cudnn)->srcTensorDesc,
+            (l->data_cudnn)->ddstTensorDesc,
+            (l->data_cudnn)->convDesc,
+            (l->data_cudnn)->dweightDesc,
             CUDNN_CONVOLUTION_BWD_FILTER_PREFER_FASTEST,
             0,
-            &l->bf_algo);
+            &((l->data_cudnn)->bf_algo));
 }
 #endif
 #endif
@@ -295,14 +295,15 @@ convolutional_layer make_convolutional_layer(int batch, int h, int w, int c, int
             l.x_norm_gpu = cuda_make_array(l.output, l.batch*out_h*out_w*n);
         }
 #ifdef CUDNN
-        cudnnCreateTensorDescriptor(&l.normTensorDesc);
-        cudnnCreateTensorDescriptor(&l.srcTensorDesc);
-        cudnnCreateTensorDescriptor(&l.dstTensorDesc);
-        cudnnCreateFilterDescriptor(&l.weightDesc);
-        cudnnCreateTensorDescriptor(&l.dsrcTensorDesc);
-        cudnnCreateTensorDescriptor(&l.ddstTensorDesc);
-        cudnnCreateFilterDescriptor(&l.dweightDesc);
-        cudnnCreateConvolutionDescriptor(&l.convDesc);
+        l.data_cudnn = calloc(1, sizeof(layercudnn));
+        cudnnCreateTensorDescriptor(&((l.data_cudnn)->normTensorDesc));
+        cudnnCreateTensorDescriptor(&((l.data_cudnn)->srcTensorDesc));
+        cudnnCreateTensorDescriptor(&((l.data_cudnn)->dstTensorDesc));
+        cudnnCreateFilterDescriptor(&((l.data_cudnn)->weightDesc));
+        cudnnCreateTensorDescriptor(&((l.data_cudnn)->dsrcTensorDesc));
+        cudnnCreateTensorDescriptor(&((l.data_cudnn)->ddstTensorDesc));
+        cudnnCreateFilterDescriptor(&((l.data_cudnn)->dweightDesc));
+        cudnnCreateConvolutionDescriptor(&((l.data_cudnn)->convDesc));
         cudnn_convolutional_setup(&l);
 #endif
     }
@@ -455,7 +456,7 @@ void forward_convolutional_layer(convolutional_layer l, network net)
     float *c = l.output;
 
     for(i = 0; i < l.batch; ++i){
-        im2col_cpu(net.input, l.c, l.h, l.w, 
+        im2col_cpu(net.input, l.c, l.h, l.w,
                 l.size, l.stride, l.pad, b);
         gemm(0,0,m,n,k,1,a,k,b,n,1,c,n);
         c += n*m;
@@ -494,7 +495,7 @@ void backward_convolutional_layer(convolutional_layer l, network net)
 
         float *im = net.input+i*l.c*l.h*l.w;
 
-        im2col_cpu(im, l.c, l.h, l.w, 
+        im2col_cpu(im, l.c, l.h, l.w,
                 l.size, l.stride, l.pad, b);
         gemm(0,1,m,n,k,1,a,k,b,k,1,c,n);
 

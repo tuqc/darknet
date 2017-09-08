@@ -37,7 +37,7 @@ typedef struct{
     list *options;
 }section;
 
-list *read_cfg(char *filename);
+list *read_cfg(const char *filename);
 
 LAYER_TYPE string_to_layer_type(char * type)
 {
@@ -277,6 +277,7 @@ layer parse_region(list *options, size_params params)
     int num = option_find_int(options, "num", 1);
 
     layer l = make_region_layer(params.batch, params.w, params.h, num, classes, coords);
+    fprintf(stderr, "classes:%d l.outputs:%d params.inputs:%d\n", classes, l.outputs, params.inputs);
     assert(l.outputs == params.inputs);
 
     l.log = option_find_int_quiet(options, "log", 0);
@@ -627,7 +628,7 @@ int is_network(section *s)
             || strcmp(s->type, "[network]")==0);
 }
 
-network parse_network_cfg(char *filename)
+network parse_network_cfg(const char *filename)
 {
     list *sections = read_cfg(filename);
     node *n = sections->front;
@@ -763,7 +764,7 @@ network parse_network_cfg(char *filename)
     return net;
 }
 
-list *read_cfg(char *filename)
+list *read_cfg(const char *filename)
 {
     FILE *file = fopen(filename, "r");
     if(file == 0) file_error(filename);
@@ -879,7 +880,7 @@ void save_connected_weights(layer l, FILE *fp)
     }
 }
 
-void save_weights_upto(network net, char *filename, int cutoff)
+void save_weights_upto(network net, const char *filename, int cutoff)
 {
 #ifdef GPU
     if(net.gpu_index >= 0){
@@ -951,7 +952,7 @@ void save_weights_upto(network net, char *filename, int cutoff)
     }
     fclose(fp);
 }
-void save_weights(network net, char *filename)
+void save_weights(network net, const char *filename)
 {
     save_weights_upto(net, filename, net.n);
 }
@@ -1088,7 +1089,7 @@ void load_convolutional_weights(layer l, FILE *fp)
 }
 
 
-void load_weights_upto(network *net, char *filename, int start, int cutoff)
+void load_weights_upto(network *net, const char *filename, int start, int cutoff)
 {
 #ifdef GPU
     if(net->gpu_index >= 0){
@@ -1178,7 +1179,7 @@ void load_weights_upto(network *net, char *filename, int start, int cutoff)
     fclose(fp);
 }
 
-void load_weights(network *net, char *filename)
+void load_weights(network *net, const char *filename)
 {
     load_weights_upto(net, filename, 0, net->n);
 }

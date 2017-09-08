@@ -117,10 +117,11 @@ layer make_connected_layer(int batch, int inputs, int outputs, ACTIVATION activa
         l.x_gpu = cuda_make_array(l.output, l.batch*outputs);
         l.x_norm_gpu = cuda_make_array(l.output, l.batch*outputs);
 #ifdef CUDNN
-        cudnnCreateTensorDescriptor(&l.normTensorDesc);
-        cudnnCreateTensorDescriptor(&l.dstTensorDesc);
-        cudnnSetTensor4dDescriptor(l.dstTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, l.batch, l.out_c, l.out_h, l.out_w); 
-        cudnnSetTensor4dDescriptor(l.normTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, 1, l.out_c, 1, 1); 
+        l.data_cudnn = calloc(1, sizeof(layercudnn));
+        cudnnCreateTensorDescriptor(&((l.data_cudnn)->normTensorDesc));
+        cudnnCreateTensorDescriptor(&((l.data_cudnn)->dstTensorDesc));
+        cudnnSetTensor4dDescriptor((l.data_cudnn)->dstTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, l.batch, l.out_c, l.out_h, l.out_w);
+        cudnnSetTensor4dDescriptor((l.data_cudnn)->normTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, 1, l.out_c, 1, 1);
 #endif
     }
 #endif
