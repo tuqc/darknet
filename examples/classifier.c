@@ -48,7 +48,7 @@ void train_classifier(char *datacfg, char *cfgfile, char *weightfile, int *gpus,
     char *train_list = option_find_str(options, "train", "data/train.list");
     int classes = option_find_int(options, "classes", 2);
 
-    char **labels = get_labels(label_list);
+    char **labels = get_labels(label_list, NULL);
     list *plist = get_paths(train_list);
     char **paths = (char **)list_to_array(plist);
     printf("%d\n", plist->size);
@@ -155,7 +155,7 @@ void train_classifier(char *datacfg, char *cfgfile, char *weightfile, int *gpus,
    char *train_list = option_find_str(options, "train", "data/train.list");
    int classes = option_find_int(options, "classes", 2);
 
-   char **labels = get_labels(label_list);
+   char **labels = get_labels(label_list, NULL);
    list *plist = get_paths(train_list);
    char **paths = (char **)list_to_array(plist);
    printf("%d\n", plist->size);
@@ -258,7 +258,7 @@ void validate_classifier_crop(char *datacfg, char *filename, char *weightfile)
     int classes = option_find_int(options, "classes", 2);
     int topk = option_find_int(options, "top", 1);
 
-    char **labels = get_labels(label_list);
+    char **labels = get_labels(label_list, NULL);
     list *plist = get_paths(valid_list);
 
     char **paths = (char **)list_to_array(plist);
@@ -326,7 +326,7 @@ void validate_classifier_10(char *datacfg, char *filename, char *weightfile)
     int classes = option_find_int(options, "classes", 2);
     int topk = option_find_int(options, "top", 1);
 
-    char **labels = get_labels(label_list);
+    char **labels = get_labels(label_list, NULL);
     list *plist = get_paths(valid_list);
 
     char **paths = (char **)list_to_array(plist);
@@ -398,7 +398,7 @@ void validate_classifier_full(char *datacfg, char *filename, char *weightfile)
     int classes = option_find_int(options, "classes", 2);
     int topk = option_find_int(options, "top", 1);
 
-    char **labels = get_labels(label_list);
+    char **labels = get_labels(label_list, NULL);
     list *plist = get_paths(valid_list);
 
     char **paths = (char **)list_to_array(plist);
@@ -461,7 +461,7 @@ void validate_classifier_single(char *datacfg, char *filename, char *weightfile)
     int classes = option_find_int(options, "classes", 2);
     int topk = option_find_int(options, "top", 1);
 
-    char **labels = get_labels(label_list);
+    char **labels = get_labels(label_list, NULL);
     list *plist = get_paths(valid_list);
 
     char **paths = (char **)list_to_array(plist);
@@ -521,7 +521,7 @@ void validate_classifier_multi(char *datacfg, char *filename, char *weightfile)
     int classes = option_find_int(options, "classes", 2);
     int topk = option_find_int(options, "top", 1);
 
-    char **labels = get_labels(label_list);
+    char **labels = get_labels(label_list, NULL);
     list *plist = get_paths(valid_list);
     int scales[] = {224, 288, 320, 352, 384};
     int nscales = sizeof(scales)/sizeof(scales[0]);
@@ -584,7 +584,7 @@ void try_classifier(char *datacfg, char *cfgfile, char *weightfile, char *filena
     int top = option_find_int(options, "top", 1);
 
     int i = 0;
-    char **names = get_labels(name_list);
+    char **names = get_labels(name_list, NULL);
     clock_t time;
     int *indexes = calloc(top, sizeof(int));
     char buff[256];
@@ -665,7 +665,7 @@ void predict_classifier(char *datacfg, char *cfgfile, char *weightfile, char *fi
     if(top == 0) top = option_find_int(options, "top", 1);
 
     int i = 0;
-    char **names = get_labels(name_list);
+    char **names = get_labels(name_list, NULL);
     clock_t time;
     int *indexes = calloc(top, sizeof(int));
     char buff[256];
@@ -720,7 +720,7 @@ void label_classifier(char *datacfg, char *filename, char *weightfile)
     char *test_list = option_find_str(options, "test", "data/train.list");
     int classes = option_find_int(options, "classes", 2);
 
-    char **labels = get_labels(label_list);
+    char **labels = get_labels(label_list, NULL);
     list *plist = get_paths(test_list);
 
     char **paths = (char **)list_to_array(plist);
@@ -842,12 +842,12 @@ void threat_classifier(char *datacfg, char *cfgfile, char *weightfile, int cam_i
     int top = option_find_int(options, "top", 1);
 
     char *name_list = option_find_str(options, "names", 0);
-    char **names = get_labels(name_list);
+    char **names = get_labels(name_list, NULL);
 
     int *indexes = calloc(top, sizeof(int));
 
     if(!cap) error("Couldn't connect to webcam.\n");
-    //cvNamedWindow("Threat", CV_WINDOW_NORMAL); 
+    //cvNamedWindow("Threat", CV_WINDOW_NORMAL);
     //cvResizeWindow("Threat", 512, 512);
     float fps = 0;
     int i;
@@ -876,15 +876,15 @@ void threat_classifier(char *datacfg, char *cfgfile, char *weightfile, int cam_i
         float *predictions = network_predict(net, in_s.data);
         float curr_threat = 0;
         if(1){
-            curr_threat = predictions[0] * 0 + 
-                predictions[1] * .6 + 
+            curr_threat = predictions[0] * 0 +
+                predictions[1] * .6 +
                 predictions[2];
         } else {
             curr_threat = predictions[218] +
-                predictions[539] + 
-                predictions[540] + 
-                predictions[368] + 
-                predictions[369] + 
+                predictions[539] +
+                predictions[540] +
+                predictions[368] +
+                predictions[369] +
                 predictions[370];
         }
         threat = roll * curr_threat + (1-roll) * threat;
@@ -892,24 +892,24 @@ void threat_classifier(char *datacfg, char *cfgfile, char *weightfile, int cam_i
         draw_box_width(out, x2 + border, y1 + .02*h, x2 + .5 * w, y1 + .02*h + border, border, 0,0,0);
         if(threat > .97) {
             draw_box_width(out,  x2 + .5 * w + border,
-                    y1 + .02*h - 2*border, 
-                    x2 + .5 * w + 6*border, 
+                    y1 + .02*h - 2*border,
+                    x2 + .5 * w + 6*border,
                     y1 + .02*h + 3*border, 3*border, 1,0,0);
         }
         draw_box_width(out,  x2 + .5 * w + border,
-                y1 + .02*h - 2*border, 
-                x2 + .5 * w + 6*border, 
+                y1 + .02*h - 2*border,
+                x2 + .5 * w + 6*border,
                 y1 + .02*h + 3*border, .5*border, 0,0,0);
         draw_box_width(out, x2 + border, y1 + .42*h, x2 + .5 * w, y1 + .42*h + border, border, 0,0,0);
         if(threat > .57) {
             draw_box_width(out,  x2 + .5 * w + border,
-                    y1 + .42*h - 2*border, 
-                    x2 + .5 * w + 6*border, 
+                    y1 + .42*h - 2*border,
+                    x2 + .5 * w + 6*border,
                     y1 + .42*h + 3*border, 3*border, 1,1,0);
         }
         draw_box_width(out,  x2 + .5 * w + border,
-                y1 + .42*h - 2*border, 
-                x2 + .5 * w + 6*border, 
+                y1 + .42*h - 2*border,
+                x2 + .5 * w + 6*border,
                 y1 + .42*h + 3*border, .5*border, 0,0,0);
 
         draw_box_width(out, x1, y1, x2, y2, border, 0,0,0);
@@ -974,12 +974,12 @@ void gun_classifier(char *datacfg, char *cfgfile, char *weightfile, int cam_inde
     int top = option_find_int(options, "top", 1);
 
     char *name_list = option_find_str(options, "names", 0);
-    char **names = get_labels(name_list);
+    char **names = get_labels(name_list, NULL);
 
     int *indexes = calloc(top, sizeof(int));
 
     if(!cap) error("Couldn't connect to webcam.\n");
-    cvNamedWindow("Threat Detection", CV_WINDOW_NORMAL); 
+    cvNamedWindow("Threat Detection", CV_WINDOW_NORMAL);
     cvResizeWindow("Threat Detection", 512, 512);
     float fps = 0;
     int i;
@@ -1051,12 +1051,12 @@ void demo_classifier(char *datacfg, char *cfgfile, char *weightfile, int cam_ind
     int top = option_find_int(options, "top", 1);
 
     char *name_list = option_find_str(options, "names", 0);
-    char **names = get_labels(name_list);
+    char **names = get_labels(name_list, NULL);
 
     int *indexes = calloc(top, sizeof(int));
 
     if(!cap) error("Couldn't connect to webcam.\n");
-    cvNamedWindow("Classifier", CV_WINDOW_NORMAL); 
+    cvNamedWindow("Classifier", CV_WINDOW_NORMAL);
     cvResizeWindow("Classifier", 512, 512);
     float fps = 0;
     int i;

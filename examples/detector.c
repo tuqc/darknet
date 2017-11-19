@@ -234,7 +234,7 @@ void validate_detector_flip(char *datacfg, char *cfgfile, char *weightfile, char
     char *valid_images = option_find_str(options, "valid", "data/train.list");
     char *name_list = option_find_str(options, "names", "data/names.list");
     char *prefix = option_find_str(options, "results", "results");
-    char **names = get_labels(name_list);
+    char **names = get_labels(name_list, NULL);
     char *mapf = option_find_str(options, "map", 0);
     int *map = 0;
     if (mapf) map = read_map(mapf);
@@ -370,7 +370,7 @@ void validate_detector(char *datacfg, char *cfgfile, char *weightfile, char *out
     char *valid_images = option_find_str(options, "valid", "data/train.list");
     char *name_list = option_find_str(options, "names", "data/names.list");
     char *prefix = option_find_str(options, "results", "results");
-    char **names = get_labels(name_list);
+    char **names = get_labels(name_list, NULL);
     char *mapf = option_find_str(options, "map", 0);
     int *map = 0;
     if (mapf) map = read_map(mapf);
@@ -575,11 +575,11 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
 {
     list *options = read_data_cfg(datacfg);
     char *name_list = option_find_str(options, "names", "data/names.list");
-    char **names = get_labels(name_list);
-    int i;
+    int i, num_labels;
+    char **names = get_labels(name_list, &num_labels);
 
     printf("labels:");
-    for (i = 0; i <  7; i++) printf("%s ", names[i]);
+    for (i = 0; i <  num_labels; i++) printf("%s ", names[i]);
     printf("\n");
     fflush(stdout);
 
@@ -709,7 +709,7 @@ void run_detector(int argc, char **argv)
         list *options = read_data_cfg(datacfg);
         int classes = option_find_int(options, "classes", 20);
         char *name_list = option_find_str(options, "names", "data/names.list");
-        char **names = get_labels(name_list);
+        char **names = get_labels(name_list, NULL);
         demo(cfg, weights, thresh, cam_index, filename, names, classes, frame_skip, prefix, avg, hier_thresh, width, height, fps, fullscreen);
     }
 }

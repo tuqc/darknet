@@ -32,7 +32,7 @@ for infile in infiles:
         imgfile = '%s/JPEGImages/%s/%s' % (indir, infile, items[0])
         list_file.write('%s\n'% imgfile)
         w, h = imagesize.get(imgfile)
-        out_file = open('%s/labels/%s/%s.txt' % (indir, infile, items[0][0:-4].replace('/', '_')), 'w')
+        out_file = open('%s/labels/%s/%s.txt' % (indir, infile, items[0][0:-4].replace('/', '_')), 'a')
         b = (float(items[2]), float(items[4]), float(items[3]), float(items[5]))
         bb = convert((w, h), b)
         out_file.write(items[1] + " " + " ".join([str(a) for a in bb]) + '\n')
